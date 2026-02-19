@@ -1,0 +1,8 @@
+[package]
+name = "jamtil"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.18", default-features = false }
+variadics_please = "1.1.0"
