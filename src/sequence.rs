@@ -1,3 +1,5 @@
+// TODO: on_reset
+
 use crate::system::*;
 use bevy::prelude::*;
 use std::marker::PhantomData;
@@ -225,7 +227,7 @@ related_node!(sequence, Sequence, SequenceOf);
 #[macro_export]
 macro_rules! seq {
     [$($c:expr),*$(,)?] => {
-        ::bevy::ecs::related!($crate::Sequence [$($c),*])
+        ::bevy::ecs::related!($crate::sequence::Sequence [$($c),*])
     };
 }
 
@@ -268,7 +270,7 @@ related_node!(alt, Alt, AltOf);
 #[macro_export]
 macro_rules! alt {
     [$($c:expr),*$(,)?] => {
-        ::bevy::ecs::related!($crate::Alt [$($c),*])
+        ::bevy::ecs::related!($crate::sequence::Alt [$($c),*])
     };
 }
 
@@ -542,7 +544,8 @@ pub trait SystemBundle<M> {
     fn into_end_bundle(self) -> impl Bundle;
 }
 
-struct SingleSystem<M>(PhantomData<M>);
+#[doc(hidden)]
+pub struct SingleSystem<M>(PhantomData<M>);
 impl<T, M> SystemBundle<SingleSystem<M>> for T
 where
     T: IntoJamtilSystem<M>,

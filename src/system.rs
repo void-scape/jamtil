@@ -1,11 +1,14 @@
 use super::*;
+use crate::prelude::Finished;
 use bevy::ecs::system::BoxedSystem;
 use std::marker::PhantomData;
 
+/// Write `AppExit::Success`.
 pub fn exit(mut writer: MessageWriter<AppExit>) {
     writer.write(AppExit::Success);
 }
 
+/// Write `AppExit::Success` if `input` is just pressed.
 pub fn exit_on_input<T: Clone + Eq + std::hash::Hash + Send + Sync + 'static>(
     input: T,
 ) -> impl FnMut(Res<ButtonInput<T>>, MessageWriter<AppExit>) {
@@ -14,6 +17,37 @@ pub fn exit_on_input<T: Clone + Eq + std::hash::Hash + Send + Sync + 'static>(
             writer.write(AppExit::Success);
         }
     }
+}
+
+/// Spawn `animation` and wait for it to finish.
+pub fn animate(animation: impl Bundle) -> JamtilSystem {
+    let mut bundle = Some(animation);
+    system(
+        move |mut commands: Commands,
+              finished: Query<(), With<Finished>>,
+              mut entity: Local<Option<Entity>>| {
+            match *entity {
+                Some(e) => {
+                    let result = finished.contains(e);
+                    if result {
+                        *entity = None;
+                    }
+                    result
+                }
+                None => {
+                    *entity = Some(
+                        commands
+                            .spawn(bundle.take().expect(
+                                "running `animate` more than once is \
+                                        not implemented",
+                            ))
+                            .id(),
+                    );
+                    false
+                }
+            }
+        },
+    )
 }
 
 pub fn system<S, M>(system: S) -> JamtilSystem
@@ -49,7 +83,8 @@ pub trait IntoJamtilSystem<M> {
     fn into_jamtil_system(self) -> JamtilSystem;
 }
 
-struct VoidSystem<T>(PhantomData<T>);
+#[doc(hidden)]
+pub struct VoidSystem<T>(PhantomData<T>);
 impl<S, M> IntoJamtilSystem<VoidSystem<M>> for S
 where
     S: IntoSystem<(), (), M>,
@@ -59,7 +94,8 @@ where
     }
 }
 
-struct EntitySystem<T>(PhantomData<T>);
+#[doc(hidden)]
+pub struct EntitySystem<T>(PhantomData<T>);
 impl<S, M> IntoJamtilSystem<EntitySystem<M>> for S
 where
     S: IntoSystem<In<Entity>, (), M>,
@@ -69,7 +105,8 @@ where
     }
 }
 
-struct VoidCondition<T>(PhantomData<T>);
+#[doc(hidden)]
+pub struct VoidCondition<T>(PhantomData<T>);
 impl<S, M> IntoJamtilSystem<VoidCondition<M>> for S
 where
     S: IntoSystem<(), bool, M>,
