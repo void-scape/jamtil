@@ -19,6 +19,72 @@ pub fn exit_on_input<T: Clone + Eq + std::hash::Hash + Send + Sync + 'static>(
     }
 }
 
+// TODO: Make these systems work with reset.
+
+/// Spawn `bundle`.
+pub fn spawn(bundle: impl Bundle) -> JamtilSystem {
+    let mut bundle = Some(bundle);
+    system(move |mut commands: Commands| match bundle.take() {
+        Some(bundle) => {
+            commands.spawn(bundle);
+        }
+        None => {
+            panic!("running `spawn` more than once is not implemented");
+        }
+    })
+}
+
+/// Insert `bundle` into `entity`.
+pub fn insert(entity: Entity, bundle: impl Bundle) -> JamtilSystem {
+    let mut bundle = Some(bundle);
+    system(move |mut commands: Commands| match bundle.take() {
+        Some(bundle) => {
+            commands.entity(entity).insert(bundle);
+        }
+        None => {
+            panic!("running `insert` more than once is not implemented");
+        }
+    })
+}
+
+/// Trigger `event_fn` for `entity`.
+///
+/// Equivalent to `commands.entity(entity).trigger(event_fn)`.
+pub fn trigger_entity<'t, E: EntityEvent<Trigger<'t>: Default>>(
+    entity: Entity,
+    event_fn: impl FnOnce(Entity) -> E + Send + Sync + 'static,
+) -> JamtilSystem {
+    let mut event_fn = Some(event_fn);
+    system(move |mut commands: Commands| match event_fn.take() {
+        Some(event_fn) => {
+            commands.entity(entity).trigger(event_fn);
+        }
+        None => {
+            panic!("running `trigger_entity` more than once is not implemented");
+        }
+    })
+}
+
+/// Delay sequence for `seconds`.
+pub fn delay(mut seconds: f32) -> JamtilSystem {
+    system(move |time: Res<Time>| {
+        let result = seconds <= 0.0;
+        if !result {
+            seconds -= time.delta_secs();
+        }
+        result
+    })
+}
+
+/// Delay sequence for `seconds`.
+pub fn delay_frames(mut frames: usize) -> JamtilSystem {
+    system(move || {
+        let result = frames == 0;
+        frames = frames.saturating_sub(1);
+        result
+    })
+}
+
 /// Spawn `animation` and wait for it to finish.
 pub fn animate(animation: impl Bundle) -> JamtilSystem {
     let mut bundle = Some(animation);

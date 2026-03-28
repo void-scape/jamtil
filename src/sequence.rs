@@ -24,7 +24,7 @@ impl Plugin for SequencePlugin {
             .add_observer(step_repeat)
             .add_observer(reset)
             //
-            .add_systems(PreUpdate, poll_system.in_set(SequenceSystems));
+            .add_systems(PostUpdate, poll_system.in_set(SequenceSystems));
         //
         // .add_observer(debug::<Reset, ()>)
         // .add_observer(debug::<Evaluate, ()>)

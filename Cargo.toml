@@ -11,6 +11,7 @@ members = ["jamtil_macros"]
 bevy = { version = "0.18", default-features = false, features = [
 	"bevy_log",
 	"bevy_color",
+	"bevy_sprite",
 ] }
 variadics_please = "1.1.0"
 jamtil_macros = { path = "jamtil_macros" }
